@@ -329,3 +329,4 @@ Welcome to VCCW -> Visit siteでPostされていることを確認
 https://dashboard.ionicframework.com/welcome
 
 https://creator.ionic.io/app/logout
+
