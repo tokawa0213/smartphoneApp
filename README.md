@@ -389,6 +389,7 @@ Cross-Domain-Ajaxプラグインを使用する必要がある。
 
 ~/vccw/wordpress/wp-includes/functions.php
 
+```php
 header("Access-Control-Allow-Origin: *");
 
 add_action('wp_ajax_tell_me', 'tell_me');
@@ -400,13 +401,14 @@ function tell_me() {
     echo json_encode($res, JSON_UNESCAPED_UNICODE);
     die();
 }
+```
 
 
 Cross-Domain-Ajaxアップデートしないと使えなくなった。最新のものにすると直る。外部から読み込むほうがパスの指定とかしなくて良くて楽。
 クライアントサイドにコード実装。
 
 
-```php
+```html
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.strobolights.tokyo/admin/article/20180728/jquery.xdomainajax.js"></script>
 <script type="text/javascript">
