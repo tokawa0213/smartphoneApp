@@ -360,7 +360,52 @@ https://hacknote.jp/archives/40493/
 読み込む際にドメイン名が異なるのでアクセスエラー（？）になる。
 Cross-Domain-Ajaxプラグインを使用する必要がある。
 
+クライアントサイド（Ionic側）
+
+~/src/index.htmlに書き足し
+
+```html
+<script>
+  var wp_url_admin_ajax = 'http:/*******.local/wp-admin/admin-ajax.php';
+    jQuery(function ($){
+        $.ajax({
+            crossDomain : true,
+            type: 'POST',
+            dataType: 'json',
+            crossDomain: true,
+            url: wp_url_admin_ajax,
+            data: {
+                action : 'tell_me'
+            },
+            success: function(response){
+                console.log(response);
+            }
+        });
+    });
+</script>
+```
+
+サーバー側(vccw)
+
+~/vccw/wordpress/wp-includes/functions.php
+
+header("Access-Control-Allow-Origin: *");
+
+add_action('wp_ajax_tell_me', 'tell_me');
+add_action('wp_ajax_nopriv_tell_me', 'tell_me');
+function tell_me() {
+    $id = 1677;
+    $res[1] = get_post_meta($id,'LAT',true);
+    $res[2] = get_post_meta($id,'ALT',true);
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    die();
+}
+
+
 Cross-Domain-Ajaxアップデートしないと使えなくなった。最新のものにすると直る。外部から読み込むほうがパスの指定とかしなくて良くて楽。
+クライアントサイドにコード実装。
+
+
 ```php
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.strobolights.tokyo/admin/article/20180728/jquery.xdomainajax.js"></script>
