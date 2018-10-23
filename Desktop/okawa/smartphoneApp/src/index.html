@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Map</title>
+  <meta name="viewport" content="initial-scale=1.0">
+  <meta charset="utf-8">
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+     * element that contains the map. */
+    #map {
+      height: 90%;
+    }
+    /* Optional: Makes the sample page fill the window. */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://www.strobolights.tokyo/admin/article/20180728/jquery.xdomainajax.js"></script>
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4e8ef7">
+
+  <!-- add to homescreen for ios -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <!-- cordova.js required for cordova apps (remove if not needed) -->
+  <script src="cordova.js"></script>
+
+  <!-- un-comment this code to enable service worker
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('service worker installed'))
+        .catch(err => console.error('Error', err));
+    }
+  </script>-->
+
+  <link href="build/main.css" rel="stylesheet">
+
+</head>
+<body>
+
+  <!-- Ionic's root component and where the app will load -->
+  <ion-app></ion-app>
+
+  <!-- The polyfills js is generated during the build process -->
+  <script src="build/polyfills.js"></script>
+
+  <!-- The vendor js is generated during the build process
+       It contains all of the dependencies in node_modules -->
+  <script src="build/vendor.js"></script>
+
+  <!-- The main bundle js is generated during the build process -->
+  <script src="build/main.js"></script>
+  <script>
+      lat_num = 0.0;
+      lng_num = 0.0;
+      kyoten = "";
+      new_kyoten = [];
+      new_lat_num = [];
+      new_lng_num = [];
+      var wp_url_admin_ajax = 'http://okawa.local/wp-admin/admin-ajax.php';
+      jQuery(function ($){
+          $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            crossDomain: true,
+            url: wp_url_admin_ajax,
+            data: {
+                action : 'tell_me'
+            },
+            success: function(response){
+              kyoten = response[0];
+              lat_num = response[1];
+              lng_num = response[2];
+              console.log(kyoten);
+              console.log(lat_num);
+              console.log(lng_num);
+              initMap(lat_num,lng_num,kyoten);
+          }
+        });
+      });    
+      function getValue(idname){
+        place_name = document.getElementById(idname).value
+        for (var i = 0;i<kyoten.length;i++) {
+          if (kyoten[i].includes(place_name)){
+            new_kyoten.push(kyoten[i]);
+            new_lat_num.push(lat_num[i]);
+            new_lng_num.push(lng_num[i]);
+          }
+        }
+        if(new_kyoten.length > 0){
+          initMap(new_lat_num,new_lng_num,new_kyoten)
+        }
+      }
+
+      function pos_now(){
+        // err if getvalue is not executed
+        if(new_kyoten.length > 0){
+          new_kyoten.unshift("現在地");
+          new_lat_num.unshift(35.74046);
+          new_lng_num.unshift(139.40483);
+          initMap(new_lat_num,new_lng_num,new_kyoten)
+          new_kyoten.shift();
+          new_lat_num.shift();
+          new_lng_num.shift();
+        }else{
+          kyoten_temp = Array.from(kyoten)
+          kyoten_lat = Array.from(lat_num)
+          kyoten_lng = Array.from(lng_num)
+          kyoten_temp.unshift("現在地");
+          kyoten_lat.unshift(35.74046);
+          kyoten_lng.unshift(139.40483);
+          initMap(kyoten_lat,kyoten_lng,kyoten_temp)
+        }
+      }
+
+      function getValue2(idname){
+        new_kyoten_2 = []
+        //value from about.html can be get
+        place_name = document.getElementById(idname).value
+        console.log(place_name); 
+        //how do I return the value
+        console.log(kyoten);
+        for (var i = 0;i<kyoten.length;i++) {
+          if (kyoten[i].includes(place_name)){
+            console.log(kyoten[i]);
+            new_kyoten_2.push(kyoten[i]);
+          }
+        }
+        console.log(new_kyoten_2)
+        //returning value
+
+        if(new_kyoten_2.length > 30){
+          loop_num = 30;
+        }else{
+          loop_num = new_kyoten_2.length;
+        }
+        for (var i = 0;i<loop_num;i++) {
+          new_id = "id0" + String(i+1);
+          document.getElementById(new_id).innerHTML = new_kyoten_2[i];
+        }
+      }
+      function initMap(lat_num,lng_num,kyoten) {
+        var position_data = []
+        for (var i = 0;i<lat_num.length;i++) {
+          position_data.push({lat:Number(lat_num[i]), lng:Number(lng_num[i])});
+        }
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: position_data[0],
+          styles: [
+              {
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#212121"
+                  }
+                ]
+              },
+              {
+                "elementType": "labels.icon",
+                "stylers": [
+                  {
+                    "visibility": "off"
+                  }
+                ]
+              },
+              {
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#757575"
+                  }
+                ]
+              },
+              {
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                  {
+                    "color": "#212121"
+                  }
+                ]
+              },
+              {
+                "featureType": "administrative",
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#757575"
+                  }
+                ]
+              },
+              {
+                "featureType": "administrative.country",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#9e9e9e"
+                  }
+                ]
+              },
+              {
+                "featureType": "administrative.land_parcel",
+                "stylers": [
+                  {
+                    "visibility": "off"
+                  }
+                ]
+              },
+              {
+                "featureType": "administrative.locality",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#bdbdbd"
+                  }
+                ]
+              },
+              {
+                "featureType": "poi",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#757575"
+                  }
+                ]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#181818"
+                  }
+                ]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#616161"
+                  }
+                ]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                  {
+                    "color": "#1b1b1b"
+                  }
+                ]
+              },
+              {
+                "featureType": "road",
+                "elementType": "geometry.fill",
+                "stylers": [
+                  {
+                    "color": "#2c2c2c"
+                  }
+                ]
+              },
+              {
+                "featureType": "road",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#8a8a8a"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.arterial",
+                "stylers": [
+                  {
+                    "visibility": "off"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.arterial",
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#373737"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#3c3c3c"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "labels",
+                "stylers": [
+                  {
+                    "visibility": "off"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.highway.controlled_access",
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#4e4e4e"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.local",
+                "stylers": [
+                  {
+                    "visibility": "off"
+                  }
+                ]
+              },
+              {
+                "featureType": "road.local",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#616161"
+                  }
+                ]
+              },
+              {
+                "featureType": "transit",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#757575"
+                  }
+                ]
+              },
+              {
+                "featureType": "water",
+                "elementType": "geometry",
+                "stylers": [
+                  {
+                    "color": "#000000"
+                  }
+                ]
+              },
+              {
+                "featureType": "water",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                  {
+                    "color": "#3d3d3d"
+                  }
+                ]
+              }
+          ]
+        });
+
+        var markers = [];
+        for(i = 0;i < position_data.length;i++){
+          markers[i] = new google.maps.Marker({
+            position: position_data[i],
+            map: map,
+            animation: google.maps.Animation.DROP,
+            icon: {
+              fillColor: "#FF0000",                //塗り潰し色
+              fillOpacity: 0.8,                    //塗り潰し透過率
+              path: google.maps.SymbolPath.CIRCLE, //円を指定
+              scale: 16,                           //円のサイズ
+              strokeColor: "#FF0000",              //枠の色
+              strokeWeight: 1.0                    //枠の透過率
+              },
+            label: {
+              text: kyoten[i],                           //ラベル文字
+              color: '#FFFFFF',                    //文字の色
+              fontSize: '20px'                     //文字のサイズ
+              },
+              name : "Hello"
+          });
+        }
+        
+        //markers[0].addListener('click', function() {
+        //    infowindow.open(map, markers[0]);
+        //});
+      
+      }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=&callback="
+    async defer></script>    
+</body>
+</html>
